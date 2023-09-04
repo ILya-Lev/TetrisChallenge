@@ -14,14 +14,21 @@ namespace TetrisChallenge
     /// penalties are taken into the consideration for 4 rows in depth at most
     /// not to prevent new pieces being stacked upon each other
     ///
-    /// holes penalty is multiplied by a magic number 2.1
+    /// holes penalty is multiplied by a magic number 2.1 (for a single play) or 3.1 (for a tournament)
     /// adjacent penalty is divided by a magic number - the width of the board
     /// (to show it's much less important than the holes penalty)
     ///
     /// current solution is not ideal, is quite volatile (best result so far is 615 score; average ~394 per run)
+    /// possible to have 459 per run in a tournament
     /// </summary>
     public class MinStateBotPlayer : IPlayer
     {
+        //private const double HolePenaltyFactor = 2.1;//for single play
+        private const double HolePenaltyFactor = 3.1;//for tournament
+        
+        //private const int HolePenaltyDepth = 4;//for single play; //as [][][][] vert is 4 rows
+        private const int HolePenaltyDepth = 30;//for tournament
+
         public void Init() { }
 
         public Command Step(StateSnapshot snapshot)
@@ -97,7 +104,8 @@ namespace TetrisChallenge
         private double GetHoleMetric(VirtualGameState state, int currentHeight)
         {
             var totalHoleMetric = 0.0;
-            var rowLimit = Math.Min(GameState.Height, currentHeight + 4);//as [][][][] vert is 4 rows
+            var rowLimit = Math.Min(GameState.Height, currentHeight + HolePenaltyDepth);
+            
             for (int column = 0; column < GameState.Width; column++)
             {
                 var coveredOnRow = -1;
@@ -118,7 +126,7 @@ namespace TetrisChallenge
                 }
             }
 
-            return totalHoleMetric * 2.1;//the hole penalty magic number, experimentally gives the best result
+            return totalHoleMetric * HolePenaltyFactor;
         }
 
         private double GetAdjacentMetric(VirtualGameState state, int currentHeight)
